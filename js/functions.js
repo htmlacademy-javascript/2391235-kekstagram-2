@@ -1,32 +1,20 @@
-const checkStringLength = function (string, maxLength) {
-  return string.length <= maxLength;
+const checkStringLength = (string, maxLength) => string.length <= maxLength;
+
+const isPalindrome = (string) => {
+  const normalized = string.toLowerCase().replaceAll(' ', '');
+  return normalized === normalized.split('').reverse().join('');
 };
 
-const isPalindrome = function (string) {
-  const normalized = string
-    .toLowerCase()
-    .replaceAll(' ', '');
-
-  const reversed = normalized
+const extractNumbers = (value) => {
+  const digits = String(value)
     .split('')
-    .reverse()
+    .filter((char) => char >= '0' && char <= '9')
     .join('');
 
-  return normalized === reversed;
+  return digits === '' ? NaN : Number(digits);
 };
 
-const extractNumbers = function (value) {
-  const string = String(value);
-  let result = '';
 
-  for (let i = 0; i < string.length; i++) {
-    if (string[i] >= '0' && string[i] <= '9') {
-      result += string[i];
-    }
-  }
-
-  return result === '' ? NaN : Number(result);
-};
 checkStringLength('проверяемая строка', 20);
 checkStringLength('проверяемая строка', 18);
 checkStringLength('проверяемая строка', 10);
