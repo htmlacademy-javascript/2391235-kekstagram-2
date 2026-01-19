@@ -2,7 +2,11 @@ const checkStringLength = (string, maxLength) => string.length <= maxLength;
 
 const isPalindrome = (string) => {
   const normalized = string.toLowerCase().replaceAll(' ', '');
-  return normalized === normalized.split('').reverse().join('');
+
+  const chars = normalized.split('');
+  const reversedChars = [...chars].reverse();
+
+  return chars.join('') === reversedChars.join('');
 };
 
 const extractNumbers = (value) => {
@@ -14,7 +18,9 @@ const extractNumbers = (value) => {
   return digits === '' ? NaN : Number(digits);
 };
 
+export { checkStringLength, isPalindrome, extractNumbers };
 
+/*
 checkStringLength('проверяемая строка', 20);
 checkStringLength('проверяемая строка', 18);
 checkStringLength('проверяемая строка', 10);
@@ -29,3 +35,4 @@ extractNumbers('ECMAScript 2022');
 extractNumbers('1 кефир, 0.5 батона');
 extractNumbers('агент 007');
 extractNumbers('я томат');
+*/
