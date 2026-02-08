@@ -20,19 +20,3 @@ const extractNumbers = (value) => {
 
 export { checkStringLength, isPalindrome, extractNumbers };
 
-/*
-checkStringLength('проверяемая строка', 20);
-checkStringLength('проверяемая строка', 18);
-checkStringLength('проверяемая строка', 10);
-
-isPalindrome('топот');
-isPalindrome('Довод');
-isPalindrome('Кекс');
-isPalindrome('Лёша на полке клопа нашёл');
-
-extractNumbers('2023 год');
-extractNumbers('ECMAScript 2022');
-extractNumbers('1 кефир, 0.5 батона');
-extractNumbers('агент 007');
-extractNumbers('я томат');
-*/
