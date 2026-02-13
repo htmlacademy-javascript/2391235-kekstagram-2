@@ -1,3 +1,6 @@
+import { openBigPicture } from './big-picture.js';
+
+
 const PICTURES_CONTAINER_SELECTOR = '.pictures';
 const PICTURE_TEMPLATE_SELECTOR = '#picture';
 const PICTURE_SELECTOR = '.picture';
@@ -18,15 +21,20 @@ const renderThumbnails = (photos) => {
 
   const fragment = document.createDocumentFragment();
 
-  photos.forEach(({ url, description, likes, comments }) => {
+  photos.forEach((photo) => {
     const pictureElement = pictureTemplate.cloneNode(true);
 
     const img = pictureElement.querySelector(PICTURE_IMG_SELECTOR);
-    img.src = url;
-    img.alt = description;
+    img.src = photo.url;
+    img.alt = photo.description;
 
-    pictureElement.querySelector(PICTURE_LIKES_SELECTOR).textContent = likes;
-    pictureElement.querySelector(PICTURE_COMMENTS_SELECTOR).textContent = comments.length;
+    pictureElement.querySelector(PICTURE_LIKES_SELECTOR).textContent = photo.likes;
+    pictureElement.querySelector(PICTURE_COMMENTS_SELECTOR).textContent = photo.comments.length;
+
+    pictureElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      openBigPicture(photo);
+    });
 
     fragment.append(pictureElement);
   });
