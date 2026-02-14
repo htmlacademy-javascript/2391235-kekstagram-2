@@ -11,4 +11,6 @@ const createIncrementIdGenerator = (start = 1) => {
   return () => current++;
 };
 
-export { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator };
+const isEscapeKey = (evt) => evt.key === 'Escape';
+
+export { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator, isEscapeKey };
