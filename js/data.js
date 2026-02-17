@@ -1,4 +1,4 @@
-import { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator } from './util.js';
+import { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator } from './utils.js';
 import { DESCRIPTIONS, MESSAGE_SENTENCES, NAMES } from './mock-data.js';
 
 const PHOTO_COUNT = 25;
