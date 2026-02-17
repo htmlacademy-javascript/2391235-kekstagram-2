@@ -1,5 +1,6 @@
 import { createPhotos } from './data.js';
-import { renderThumbnails } from './picture-thumbnails.js';
+import { initThumbnails } from './picture-thumbnails.js';
+import './upload-form.js';
 
 const photos = createPhotos();
-renderThumbnails(photos);
+initThumbnails(photos);
