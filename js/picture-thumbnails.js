@@ -33,30 +33,33 @@ function onPicturesContainerClick(evt) {
   openBigPicture(photo);
 }
 
-if (picturesContainer) {
-  picturesContainer.addEventListener('click', onPicturesContainerClick);
-}
-
-const renderThumbnails = (photos) => {
+const initThumbnails = (photos) => {
   if (!picturesContainer || !pictureTemplate) {
     return;
   }
+
   renderedPhotos = photos;
+
   const fragment = document.createDocumentFragment();
 
   photos.forEach((photo, index) => {
     const pictureElement = pictureTemplate.cloneNode(true);
     pictureElement.dataset.pictureId = index;
+
     const img = pictureElement.querySelector(PICTURE_IMG_SELECTOR);
     img.src = photo.url;
     img.alt = photo.description;
 
     pictureElement.querySelector(PICTURE_LIKES_SELECTOR).textContent = photo.likes;
-    pictureElement.querySelector(PICTURE_COMMENTS_SELECTOR).textContent = photo.comments.length;
+    pictureElement.querySelector(PICTURE_COMMENTS_SELECTOR).textContent =
+      photo.comments.length;
 
     fragment.append(pictureElement);
   });
+
   picturesContainer.append(fragment);
+
+  picturesContainer.addEventListener('click', onPicturesContainerClick);
 };
 
-export { renderThumbnails };
+export { initThumbnails };
