@@ -1,4 +1,5 @@
 import { isEscapeKey } from './utils.js';
+import { initUploadEditor, resetEditor } from './img-upload-editor.js';
 
 const FORM_SELECTOR = '.img-upload__form';
 const OVERLAY_SELECTOR = '.img-upload__overlay';
@@ -82,24 +83,33 @@ const getHashtagsErrorMessage = (value) => {
 
 const getCommentErrorMessage = () => `Длина комментария не больше ${COMMENT_MAX_LENGTH} символов`;
 
-const pristine = formElement
-  ? new Pristine(formElement, {
+const initValidate = () => {
+  if (!formElement) {
+    return null;
+  }
+
+  const instance = new Pristine(formElement, {
     classTo: 'img-upload__field-wrapper',
     errorTextParent: 'img-upload__field-wrapper',
     errorTextTag: 'span',
     errorTextClass: 'text__error',
-  })
-  : null;
+  });
 
-if (pristine && hashtagsElement) {
-  pristine.addValidator(hashtagsElement, validateHashtagsFormat, getHashtagsErrorMessage, 1, true);
-  pristine.addValidator(hashtagsElement, validateHashtagsCount, getHashtagsErrorMessage, 2, true);
-  pristine.addValidator(hashtagsElement, validateHashtagsUnique, getHashtagsErrorMessage, 3, true);
-}
+  if (hashtagsElement) {
+    instance.addValidator(hashtagsElement, validateHashtagsFormat, getHashtagsErrorMessage, 1, true);
+    instance.addValidator(hashtagsElement, validateHashtagsCount, getHashtagsErrorMessage, 2, true);
+    instance.addValidator(hashtagsElement, validateHashtagsUnique, getHashtagsErrorMessage, 3, true);
+  }
 
-if (pristine && descriptionElement) {
-  pristine.addValidator(descriptionElement, validateComment, getCommentErrorMessage);
-}
+  if (descriptionElement) {
+    instance.addValidator(descriptionElement, validateComment, getCommentErrorMessage);
+  }
+
+  return instance;
+};
+
+let pristine = null;
+let isEditorInitialized = false;
 
 const resetForm = () => {
   formElement.reset();
@@ -108,8 +118,6 @@ const resetForm = () => {
     pristine.reset();
   }
 };
-
-let closeUploadForm = () => {};
 
 const onDocumentKeydown = (evt) => {
   if (!isEscapeKey(evt)) {
@@ -124,7 +132,7 @@ const onDocumentKeydown = (evt) => {
   closeUploadForm();
 };
 
-closeUploadForm = () => {
+function closeUploadForm () {
   if (!isOverlayOpened()) {
     return;
   }
@@ -133,7 +141,8 @@ closeUploadForm = () => {
   document.body.classList.remove(MODAL_OPEN_CLASS);
   document.removeEventListener('keydown', onDocumentKeydown);
   resetForm();
-};
+  resetEditor();
+}
 
 const openUploadForm = () => {
   overlayElement.classList.remove(HIDDEN_CLASS);
@@ -143,6 +152,13 @@ const openUploadForm = () => {
 
 const onFileInputChange = () => {
   openUploadForm();
+
+  if (!isEditorInitialized) {
+    initUploadEditor();
+    isEditorInitialized = true;
+  }
+
+  resetEditor();
 };
 
 const onCancelButtonClick = (evt) => {
@@ -165,7 +181,7 @@ const initUploadForm = () => {
   if (!formElement || !overlayElement || !fileInputElement || !cancelButtonElement) {
     return;
   }
-
+  pristine = initValidate();
   fileInputElement.addEventListener('change', onFileInputChange);
   cancelButtonElement.addEventListener('click', onCancelButtonClick);
   formElement.addEventListener('submit', onFormSubmit);

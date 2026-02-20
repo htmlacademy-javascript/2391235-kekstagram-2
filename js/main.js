@@ -1,6 +1,13 @@
 import { createPhotos } from './data.js';
 import { initThumbnails } from './picture-thumbnails.js';
 import './upload-form.js';
+import { showDataError } from './data-error.js';
 
-const photos = createPhotos();
-initThumbnails(photos);
+
+try {
+  const photos = createPhotos();
+  initThumbnails(photos);
+} catch (e) {
+  showDataError();
+}
+
