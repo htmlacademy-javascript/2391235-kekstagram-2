@@ -1,4 +1,5 @@
 const DATA_ERROR_TEMPLATE_SELECTOR = '#data-error';
+const REMOVE_TIMEOUT = 5000;
 
 const showDataError = () => {
   const template = document.querySelector(DATA_ERROR_TEMPLATE_SELECTOR);
@@ -7,27 +8,19 @@ const showDataError = () => {
     return;
   }
 
-  const node = template.content.cloneNode(true);
-  const element = node.querySelector('.data-error');
+  const errorElement = template.content.firstElementChild.cloneNode(true);
 
-  if (!element) {
-    return;
-  }
+  errorElement.style.position = 'fixed';
+  errorElement.style.left = '0';
+  errorElement.style.right = '0';
+  errorElement.style.top = '0';
+  errorElement.style.zIndex = '1000';
 
-  element.style.position = 'fixed';
-  element.style.left = '0';
-  element.style.right = '0';
-  element.style.top = '0';
-  element.style.zIndex = '1000';
-
-  document.body.append(node);
+  document.body.append(errorElement);
 
   setTimeout(() => {
-    const current = document.querySelector('.data-error');
-    if (current) {
-      current.remove();
-    }
-  }, 5000);
+    errorElement.remove();
+  }, REMOVE_TIMEOUT);
 };
 
 export { showDataError };

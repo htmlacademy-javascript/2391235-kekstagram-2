@@ -1,5 +1,6 @@
 import { isEscapeKey } from './utils.js';
 import { initUploadEditor, resetEditor } from './img-upload-editor.js';
+import { sendData } from './api.js';
 
 const FORM_SELECTOR = '.img-upload__form';
 const OVERLAY_SELECTOR = '.img-upload__overlay';
@@ -7,6 +8,7 @@ const FILE_INPUT_SELECTOR = '.img-upload__input';
 const CANCEL_BUTTON_SELECTOR = '.img-upload__cancel';
 const HASHTAGS_SELECTOR = '.text__hashtags';
 const DESCRIPTION_SELECTOR = '.text__description';
+const SUBMIT_BUTTON_SELECTOR = '.img-upload__submit';
 
 const MODAL_OPEN_CLASS = 'modal-open';
 const HIDDEN_CLASS = 'hidden';
@@ -25,6 +27,10 @@ const fileInputElement = document.querySelector(FILE_INPUT_SELECTOR);
 const cancelButtonElement = document.querySelector(CANCEL_BUTTON_SELECTOR);
 const hashtagsElement = document.querySelector(HASHTAGS_SELECTOR);
 const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
+const submitButtonElement = document.querySelector(SUBMIT_BUTTON_SELECTOR);
+
+let pristine = null;
+let isEditorInitialized = false;
 
 const isOverlayOpened = () => overlayElement && !overlayElement.classList.contains(HIDDEN_CLASS);
 
@@ -54,7 +60,6 @@ const validateHashtagsFormat = (value) => {
     if (tag.length < HASHTAG_MIN_LENGTH || tag.length > HASHTAG_MAX_LENGTH) {
       return false;
     }
-
     return HASHTAG_REGEXP.test(tag);
   });
 };
@@ -108,9 +113,6 @@ const initValidate = () => {
   return instance;
 };
 
-let pristine = null;
-let isEditorInitialized = false;
-
 const resetForm = () => {
   formElement.reset();
   fileInputElement.value = '';
@@ -118,6 +120,67 @@ const resetForm = () => {
     pristine.reset();
   }
 };
+
+const blockSubmitButton = () => {
+  if (!submitButtonElement) {
+    return;
+  }
+  submitButtonElement.disabled = true;
+  submitButtonElement.textContent = 'Публикую...';
+};
+
+const unblockSubmitButton = () => {
+  if (!submitButtonElement) {
+    return;
+  }
+  submitButtonElement.disabled = false;
+  submitButtonElement.textContent = 'Опубликовать';
+};
+
+const showMessage = (templateId, innerSelector, buttonSelector) => {
+  const template = document.querySelector(templateId);
+  if (!template) {
+    return;
+  }
+
+  const messageElement = template.content.firstElementChild.cloneNode(true);
+  const innerElement = messageElement.querySelector(innerSelector);
+  const buttonElement = messageElement.querySelector(buttonSelector);
+
+  const removeMessage = () => {
+    messageElement.remove();
+    document.removeEventListener('keydown', onEsc);
+    document.removeEventListener('click', onOutsideClick);
+  };
+
+  function onEsc(evt) {
+    if (isEscapeKey(evt)) {
+      evt.preventDefault();
+      removeMessage();
+    }
+  }
+
+  function onOutsideClick(evt) {
+    if (innerElement && !innerElement.contains(evt.target)) {
+      removeMessage();
+    }
+  }
+
+  if (buttonElement) {
+    buttonElement.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      removeMessage();
+    });
+  }
+
+  document.addEventListener('keydown', onEsc);
+  document.addEventListener('click', onOutsideClick);
+
+  document.body.append(messageElement);
+};
+
+const showSuccessMessage = () => showMessage('#success', '.success__inner', '.success__button');
+const showErrorMessage = () => showMessage('#error', '.error__inner', '.error__button');
 
 const onDocumentKeydown = (evt) => {
   if (!isEscapeKey(evt)) {
@@ -132,7 +195,7 @@ const onDocumentKeydown = (evt) => {
   closeUploadForm();
 };
 
-function closeUploadForm () {
+function closeUploadForm() {
   if (!isOverlayOpened()) {
     return;
   }
@@ -167,13 +230,35 @@ const onCancelButtonClick = (evt) => {
 };
 
 const onFormSubmit = (evt) => {
+  evt.preventDefault();
+
   if (!pristine) {
     return;
   }
 
   const isValid = pristine.validate();
   if (!isValid) {
-    evt.preventDefault();
+    return;
+  }
+
+  blockSubmitButton();
+
+  sendData(new FormData(formElement))
+    .then(() => {
+      closeUploadForm();
+      showSuccessMessage();
+    })
+    .catch(() => {
+      showErrorMessage();
+    })
+    .finally(() => {
+      unblockSubmitButton();
+    });
+};
+const onFormReset = () => {
+  resetEditor();
+  if (pristine) {
+    pristine.reset();
   }
 };
 
@@ -181,10 +266,12 @@ const initUploadForm = () => {
   if (!formElement || !overlayElement || !fileInputElement || !cancelButtonElement) {
     return;
   }
+
   pristine = initValidate();
   fileInputElement.addEventListener('change', onFileInputChange);
   cancelButtonElement.addEventListener('click', onCancelButtonClick);
   formElement.addEventListener('submit', onFormSubmit);
+  formElement.addEventListener('reset', onFormReset);
 };
 
 initUploadForm();

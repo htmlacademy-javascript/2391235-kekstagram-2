@@ -107,7 +107,7 @@ const updateSliderForEffect = (effectName) => {
   setEffectLevelVisibility(effectName);
 
   if (!sliderElement.noUiSlider) {
-    sliderElement.noUiSlider.create({
+    noUiSlider.create(sliderElement, {
       range: config.range,
       start: config.start,
       step: config.step,
