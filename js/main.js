@@ -2,12 +2,16 @@ import { getData } from './api.js';
 import { initThumbnails } from './picture-thumbnails.js';
 import './upload-form.js';
 import { showDataError } from './data-error.js';
+import { showFilters } from './img-filters.js';
 
-// Загружаем данные с сервера
-getData()
-  .then((photos) => {
+const loadData = async () => {
+  try {
+    const photos = await getData();
     initThumbnails(photos);
-  })
-  .catch(() => {
+    showFilters(photos);
+  } catch (error) {
     showDataError();
-  });
+  }
+};
+
+loadData();

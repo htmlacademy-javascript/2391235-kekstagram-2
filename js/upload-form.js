@@ -13,6 +13,9 @@ const SUBMIT_BUTTON_SELECTOR = '.img-upload__submit';
 const MODAL_OPEN_CLASS = 'modal-open';
 const HIDDEN_CLASS = 'hidden';
 
+const SUBMIT_TEXT_DEFAULT = 'Опубликовать';
+const SUBMIT_TEXT_SENDING = 'Публикую...';
+
 const HASHTAG_MAX_COUNT = 5;
 const HASHTAG_MIN_LENGTH = 2;
 const HASHTAG_MAX_LENGTH = 20;
@@ -126,7 +129,7 @@ const blockSubmitButton = () => {
     return;
   }
   submitButtonElement.disabled = true;
-  submitButtonElement.textContent = 'Публикую...';
+  submitButtonElement.textContent = SUBMIT_TEXT_SENDING;
 };
 
 const unblockSubmitButton = () => {
@@ -134,56 +137,89 @@ const unblockSubmitButton = () => {
     return;
   }
   submitButtonElement.disabled = false;
-  submitButtonElement.textContent = 'Опубликовать';
+  submitButtonElement.textContent = SUBMIT_TEXT_DEFAULT;
+};
+
+const getTemplate = (templateId) => document.querySelector(templateId);
+
+const cloneMessageElement = (template) => template.content.firstElementChild.cloneNode(true);
+
+const getInnerElement = (messageElement, innerSelector) => messageElement.querySelector(innerSelector);
+
+const getButtonElement = (messageElement, buttonSelector) => messageElement.querySelector(buttonSelector);
+
+const addMessageListeners = (onEsc, onOutsideClick) => {
+  document.addEventListener('keydown', onEsc);
+  document.addEventListener('click', onOutsideClick);
+};
+
+const removeMessageListeners = (onEsc, onOutsideClick) => {
+  document.removeEventListener('keydown', onEsc);
+  document.removeEventListener('click', onOutsideClick);
+};
+
+const createRemoveMessage = (messageElement, onEsc, onOutsideClick) => () => {
+  messageElement.remove();
+  removeMessageListeners(onEsc, onOutsideClick);
+};
+
+const createEscHandler = (removeMessage) => (evt) => {
+  if (isEscapeKey(evt)) {
+    evt.preventDefault();
+    removeMessage();
+  }
+};
+
+const createOutsideClickHandler = (innerElement, removeMessage) => (evt) => {
+  if (innerElement && !innerElement.contains(evt.target)) {
+    removeMessage();
+  }
+};
+
+const bindCloseButton = (buttonElement, removeMessage) => {
+  if (!buttonElement) {
+    return;
+  }
+  buttonElement.addEventListener('click', (evt) => {
+    evt.preventDefault();
+    removeMessage();
+  });
 };
 
 const showMessage = (templateId, innerSelector, buttonSelector) => {
-  const template = document.querySelector(templateId);
+  const template = getTemplate(templateId);
   if (!template) {
     return;
   }
 
-  const messageElement = template.content.firstElementChild.cloneNode(true);
-  const innerElement = messageElement.querySelector(innerSelector);
-  const buttonElement = messageElement.querySelector(buttonSelector);
+  const messageElement = cloneMessageElement(template);
+  const innerElement = getInnerElement(messageElement, innerSelector);
+  const buttonElement = getButtonElement(messageElement, buttonSelector);
 
-  const removeMessage = () => {
-    messageElement.remove();
-    document.removeEventListener('keydown', onEsc);
-    document.removeEventListener('click', onOutsideClick);
-  };
+  let removeMessage = () => {};
 
-  function onEsc(evt) {
-    if (isEscapeKey(evt)) {
-      evt.preventDefault();
-      removeMessage();
-    }
-  }
+  const onEsc = createEscHandler(() => removeMessage());
+  const onOutsideClick = createOutsideClickHandler(innerElement, () => removeMessage());
 
-  function onOutsideClick(evt) {
-    if (innerElement && !innerElement.contains(evt.target)) {
-      removeMessage();
-    }
-  }
+  removeMessage = createRemoveMessage(messageElement, onEsc, onOutsideClick);
 
-  if (buttonElement) {
-    buttonElement.addEventListener('click', (evt) => {
-      evt.preventDefault();
-      removeMessage();
-    });
-  }
-
-  document.addEventListener('keydown', onEsc);
-  document.addEventListener('click', onOutsideClick);
+  bindCloseButton(buttonElement, removeMessage);
+  addMessageListeners(onEsc, onOutsideClick);
 
   document.body.append(messageElement);
 };
+const isMessageOpened = () =>
+  document.querySelector('.success') || document.querySelector('.error');
 
 const showSuccessMessage = () => showMessage('#success', '.success__inner', '.success__button');
 const showErrorMessage = () => showMessage('#error', '.error__inner', '.error__button');
 
 const onDocumentKeydown = (evt) => {
   if (!isEscapeKey(evt)) {
+    return;
+  }
+
+  if (isMessageOpened()) {
     return;
   }
 
@@ -255,6 +291,7 @@ const onFormSubmit = (evt) => {
       unblockSubmitButton();
     });
 };
+
 const onFormReset = () => {
   resetEditor();
   if (pristine) {
