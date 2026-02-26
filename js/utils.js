@@ -13,4 +13,13 @@ const createIncrementIdGenerator = (start = 1) => {
 
 const isEscapeKey = (evt) => evt.key === 'Escape';
 
-export { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator, isEscapeKey };
+function debounce(callback, timeoutDelay = 500) {
+  let timeoutId;
+
+  return (...rest) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
+  };
+}
+
+export { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator, isEscapeKey , debounce };
