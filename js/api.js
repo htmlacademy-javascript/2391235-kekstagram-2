@@ -1,6 +1,9 @@
-const BASE_URL = 'https://31.javascript.htmlacademy.pro/kekstagram';
-const ROUTE_GET = '/data';
-const ROUTE_POST = '';
+const SERVER_URL = 'https://31.javascript.htmlacademy.pro/kekstagram';
+
+const ROUTES = {
+  GET: '/data',
+  POST: '/',
+};
 
 const checkResponse = (response) => {
   if (!response.ok) {
@@ -10,12 +13,12 @@ const checkResponse = (response) => {
 };
 
 const getData = () =>
-  fetch(`${BASE_URL}${ROUTE_GET}`)
+  fetch(`${SERVER_URL}${ROUTES.GET}`)
     .then(checkResponse)
     .then((response) => response.json());
 
 const sendData = (body) =>
-  fetch(`${BASE_URL}${ROUTE_POST}`, {
+  fetch(`${SERVER_URL}${ROUTES.POST}`, {
     method: 'POST',
     body,
   }).then(checkResponse);

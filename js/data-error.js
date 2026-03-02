@@ -10,12 +10,6 @@ const showDataError = () => {
 
   const errorElement = template.content.firstElementChild.cloneNode(true);
 
-  errorElement.style.position = 'fixed';
-  errorElement.style.left = '0';
-  errorElement.style.right = '0';
-  errorElement.style.top = '0';
-  errorElement.style.zIndex = '1000';
-
   document.body.append(errorElement);
 
   setTimeout(() => {

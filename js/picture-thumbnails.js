@@ -15,6 +15,15 @@ const pictureTemplate = document
 
 let renderedPhotos = [];
 
+const clearThumbnails = () => {
+  if (!picturesContainer) {
+    return;
+  }
+
+  const pictures = picturesContainer.querySelectorAll(PICTURE_SELECTOR);
+  pictures.forEach((picture) => picture.remove());
+};
+
 function onPicturesContainerClick(evt) {
   const pictureElement = evt.target.closest(PICTURE_SELECTOR);
   if (!pictureElement) {
@@ -33,12 +42,18 @@ function onPicturesContainerClick(evt) {
   openBigPicture(photo);
 }
 
+if (picturesContainer) {
+  picturesContainer.addEventListener('click', onPicturesContainerClick);
+}
+
 const initThumbnails = (photos) => {
   if (!picturesContainer || !pictureTemplate) {
     return;
   }
 
-  renderedPhotos = photos;
+  clearThumbnails();
+
+  renderedPhotos = photos.slice();
 
   const fragment = document.createDocumentFragment();
 
@@ -50,7 +65,9 @@ const initThumbnails = (photos) => {
     img.src = photo.url;
     img.alt = photo.description;
 
-    pictureElement.querySelector(PICTURE_LIKES_SELECTOR).textContent = photo.likes;
+    pictureElement.querySelector(PICTURE_LIKES_SELECTOR).textContent =
+      photo.likes;
+
     pictureElement.querySelector(PICTURE_COMMENTS_SELECTOR).textContent =
       photo.comments.length;
 
@@ -58,8 +75,6 @@ const initThumbnails = (photos) => {
   });
 
   picturesContainer.append(fragment);
-
-  picturesContainer.addEventListener('click', onPicturesContainerClick);
 };
 
 export { initThumbnails };
