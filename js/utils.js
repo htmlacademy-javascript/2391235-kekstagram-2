@@ -1,25 +1,40 @@
+const DEFAULT_DEBOUNCE_DELAY = 500;
+const DEFAULT_ID_START = 1;
+const ESCAPE_KEY = 'Escape';
+
 const getRandomInteger = (min, max) => {
   const lower = Math.ceil(Math.min(min, max));
   const upper = Math.floor(Math.max(min, max));
   return Math.floor(Math.random() * (upper - lower + 1)) + lower;
 };
 
-const getRandomArrayElement = (elements) => elements[getRandomInteger(0, elements.length - 1)];
+const getRandomArrayElement = (elements) => {
+  if (!Array.isArray(elements) || elements.length === 0) {
+    return undefined;
+  }
+  return elements[getRandomInteger(0, elements.length - 1)];
+};
 
-const createIncrementIdGenerator = (start = 1) => {
+const createIncrementIdGenerator = (start = DEFAULT_ID_START) => {
   let current = start;
   return () => current++;
 };
 
-const isEscapeKey = (evt) => evt.key === 'Escape';
+const isEscapeKey = (evt) => evt.key === ESCAPE_KEY;
 
-function debounce(callback, timeoutDelay = 500) {
+const debounce = (callback, timeoutDelay = DEFAULT_DEBOUNCE_DELAY) => {
   let timeoutId;
 
-  return (...rest) => {
+  return (...args) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => callback.apply(this, rest), timeoutDelay);
+    timeoutId = setTimeout(() => callback(...args), timeoutDelay);
   };
-}
+};
 
-export { getRandomInteger, getRandomArrayElement, createIncrementIdGenerator, isEscapeKey , debounce };
+export {
+  getRandomInteger,
+  getRandomArrayElement,
+  createIncrementIdGenerator,
+  isEscapeKey,
+  debounce,
+};

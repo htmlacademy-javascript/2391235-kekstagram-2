@@ -3,28 +3,57 @@ import {
   SCALE_MIN,
   SCALE_MAX,
   SCALE_DEFAULT,
-  EFFECTS
+  EFFECTS,
 } from './img-upload-config.js';
 
-const overlayElement = document.querySelector('.img-upload__overlay');
-const previewImageElement = overlayElement.querySelector('.img-upload__preview img');
+const OVERLAY_SELECTOR = '.img-upload__overlay';
+const PREVIEW_IMG_SELECTOR = '.img-upload__preview img';
 
-const scaleSmallerButton = overlayElement.querySelector('.scale__control--smaller');
-const scaleBiggerButton = overlayElement.querySelector('.scale__control--bigger');
-const scaleValueInput = overlayElement.querySelector('.scale__control--value');
+const SCALE_SMALLER_BUTTON_SELECTOR = '.scale__control--smaller';
+const SCALE_BIGGER_BUTTON_SELECTOR = '.scale__control--bigger';
+const SCALE_VALUE_INPUT_SELECTOR = '.scale__control--value';
 
-const effectsListElement = overlayElement.querySelector('.effects__list');
-const effectLevelFieldset = overlayElement.querySelector('.img-upload__effect-level');
-const effectLevelValue = overlayElement.querySelector('.effect-level__value');
-const sliderElement = overlayElement.querySelector('.effect-level__slider');
+const EFFECTS_LIST_SELECTOR = '.effects__list';
+const EFFECT_LEVEL_FIELDSET_SELECTOR = '.img-upload__effect-level';
+const EFFECT_LEVEL_VALUE_SELECTOR = '.effect-level__value';
+const SLIDER_SELECTOR = '.effect-level__slider';
+
+const HIDDEN_CLASS = 'hidden';
+const EFFECT_NONE = 'none';
+
+const EFFECT_RADIO_CLASS = 'effects__radio';
+const EFFECT_PREVIEW_CLASS_PREFIX = 'effects__preview--';
+const EFFECT_NONE_RADIO_SELECTOR = '#effect-none';
+
+const SLIDER_CONNECT_VALUE = 'lower';
+const SLIDER_UPDATE_EVENT = 'update';
+
+const overlayElement = document.querySelector(OVERLAY_SELECTOR);
+
+if (!overlayElement) {
+  throw new Error('Upload overlay not found');
+}
+
+const previewImageElement = overlayElement.querySelector(PREVIEW_IMG_SELECTOR);
+
+const scaleSmallerButton = overlayElement.querySelector(SCALE_SMALLER_BUTTON_SELECTOR);
+const scaleBiggerButton = overlayElement.querySelector(SCALE_BIGGER_BUTTON_SELECTOR);
+const scaleValueInput = overlayElement.querySelector(SCALE_VALUE_INPUT_SELECTOR);
+
+const effectsListElement = overlayElement.querySelector(EFFECTS_LIST_SELECTOR);
+const effectLevelFieldset = overlayElement.querySelector(EFFECT_LEVEL_FIELDSET_SELECTOR);
+const effectLevelValue = overlayElement.querySelector(EFFECT_LEVEL_VALUE_SELECTOR);
+const sliderElement = overlayElement.querySelector(SLIDER_SELECTOR);
 
 let currentScale = SCALE_DEFAULT;
-let currentEffect = 'none';
+let currentEffect = EFFECT_NONE;
+
+let isEditorInitialized = false;
 
 const resetEffectClass = () => {
-  previewImageElement.classList.forEach((cls) => {
-    if (cls.startsWith('effects__preview--')) {
-      previewImageElement.classList.remove(cls);
+  previewImageElement.classList.forEach((className) => {
+    if (className.startsWith(EFFECT_PREVIEW_CLASS_PREFIX)) {
+      previewImageElement.classList.remove(className);
     }
   });
 };
@@ -46,23 +75,24 @@ const onScaleBiggerClick = () => {
 };
 
 const setEffectLevelVisibility = (effectName) => {
-  if (effectName === 'none') {
-    effectLevelFieldset.classList.add('hidden');
-  } else {
-    effectLevelFieldset.classList.remove('hidden');
+  if (effectName === EFFECT_NONE) {
+    effectLevelFieldset.classList.add(HIDDEN_CLASS);
+    return;
   }
+
+  effectLevelFieldset.classList.remove(HIDDEN_CLASS);
 };
 
 const applyEffect = (effectName, level) => {
-  const config = EFFECTS[effectName];
-
-  if (effectName === 'none') {
+  if (effectName === EFFECT_NONE) {
     previewImageElement.style.filter = '';
     effectLevelValue.value = '';
     return;
   }
 
+  const config = EFFECTS[effectName];
   const value = Number(level);
+
   previewImageElement.style.filter = `${config.filter}(${value}${config.unit})`;
   effectLevelValue.value = String(value);
 };
@@ -77,14 +107,14 @@ const updateSliderForEffect = (effectName) => {
       range: config.range,
       start: config.start,
       step: config.step,
-      connect: 'lower',
+      connect: SLIDER_CONNECT_VALUE,
       format: {
         to: (value) => Number(value),
         from: (value) => Number(value),
       },
     });
 
-    sliderElement.noUiSlider.on('update', () => {
+    sliderElement.noUiSlider.on(SLIDER_UPDATE_EVENT, () => {
       const value = sliderElement.noUiSlider.get();
       applyEffect(currentEffect, value);
     });
@@ -103,13 +133,14 @@ const updateSliderForEffect = (effectName) => {
 };
 
 const resetEffects = () => {
-  currentEffect = 'none';
+  currentEffect = EFFECT_NONE;
   resetEffectClass();
+
   previewImageElement.style.filter = '';
-  setEffectLevelVisibility('none');
+  setEffectLevelVisibility(EFFECT_NONE);
 
   if (sliderElement.noUiSlider) {
-    sliderElement.noUiSlider.set(EFFECTS.none.start);
+    sliderElement.noUiSlider.set(EFFECTS[EFFECT_NONE].start);
   }
 
   effectLevelValue.value = '';
@@ -117,7 +148,8 @@ const resetEffects = () => {
 
 const onEffectsChange = (evt) => {
   const target = evt.target;
-  if (!target.classList.contains('effects__radio')) {
+
+  if (!target.classList.contains(EFFECT_RADIO_CLASS)) {
     return;
   }
 
@@ -126,34 +158,62 @@ const onEffectsChange = (evt) => {
   resetEffectClass();
   previewImageElement.style.filter = '';
 
-  if (currentEffect === 'none') {
+  if (currentEffect === EFFECT_NONE) {
     resetEffects();
     return;
   }
 
-  previewImageElement.classList.add(`effects__preview--${currentEffect}`);
+  previewImageElement.classList.add(`${EFFECT_PREVIEW_CLASS_PREFIX}${currentEffect}`);
   updateSliderForEffect(currentEffect);
 };
 
-export const resetEditor = () => {
+const resetEditor = () => {
+  if (
+    !previewImageElement ||
+    !scaleValueInput ||
+    !effectLevelFieldset ||
+    !effectLevelValue ||
+    !sliderElement
+  ) {
+    return;
+  }
+
   applyScale(SCALE_DEFAULT);
   resetEffects();
 
-  const noneRadio = overlayElement.querySelector('#effect-none');
+  const noneRadio = overlayElement.querySelector(EFFECT_NONE_RADIO_SELECTOR);
   if (noneRadio) {
     noneRadio.checked = true;
   }
 };
 
-export const initUploadEditor = () => {
+const initUploadEditor = () => {
+  if (isEditorInitialized) {
+    return;
+  }
+
+  if (
+    !previewImageElement ||
+    !scaleSmallerButton ||
+    !scaleBiggerButton ||
+    !effectsListElement ||
+    !sliderElement
+  ) {
+    return;
+  }
+
+  isEditorInitialized = true;
+
   applyScale(SCALE_DEFAULT);
-  setEffectLevelVisibility('none');
+  setEffectLevelVisibility(EFFECT_NONE);
 
   scaleSmallerButton.addEventListener('click', onScaleSmallerClick);
   scaleBiggerButton.addEventListener('click', onScaleBiggerClick);
   effectsListElement.addEventListener('change', onEffectsChange);
 
   if (!sliderElement.noUiSlider) {
-    updateSliderForEffect('none');
+    updateSliderForEffect(EFFECT_NONE);
   }
 };
+
+export { resetEditor, initUploadEditor };
