@@ -27,7 +27,7 @@ const HASHTAG_REGEXP = /^#[A-Za-zА-Яа-яЁё0-9_]+$/;
 const formElement = document.querySelector(FORM_SELECTOR);
 const overlayElement = document.querySelector(OVERLAY_SELECTOR);
 const fileInputElement = document.querySelector(FILE_INPUT_SELECTOR);
-const cancelButtonElement = document.querySelector(CANCEL_BUTTON_SELECTOR);
+const cancelButtonElement = overlayElement ? overlayElement.querySelector(CANCEL_BUTTON_SELECTOR) : null;
 const hashtagsElement = document.querySelector(HASHTAGS_SELECTOR);
 const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
 const submitButtonElement = document.querySelector(SUBMIT_BUTTON_SELECTOR);
@@ -40,14 +40,32 @@ const EFFECTS_PREVIEW_SELECTOR = '.effects__preview';
 
 const FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
-const previewImgElement = document.querySelector(PREVIEW_IMG_SELECTOR);
-const effectsPreviewElements = document.querySelectorAll(EFFECTS_PREVIEW_SELECTOR);
+const previewImgElement = overlayElement ? overlayElement.querySelector(PREVIEW_IMG_SELECTOR) : null;
+const defaultPreviewSrc = previewImgElement ? previewImgElement.src : '';
+const effectsPreviewElements = overlayElement ? overlayElement.querySelectorAll(EFFECTS_PREVIEW_SELECTOR) : [];
+
+const SUCCESS_SELECTOR = '.success';
+const ERROR_SELECTOR = '.error';
+
+const SUCCESS_TEMPLATE_ID = '#success';
+const ERROR_TEMPLATE_ID = '#error';
+
+const SUCCESS_INNER_SELECTOR = '.success__inner';
+const ERROR_INNER_SELECTOR = '.error__inner';
+
+const SUCCESS_BUTTON_SELECTOR = '.success__button';
+const ERROR_BUTTON_SELECTOR = '.error__button';
+
+const PRISTINE_ERROR_SELECTOR = '.pristine-error';
+const PRISTINE_SUCCESS_SELECTOR = '.pristine-success';
+const TEXT_ERROR_SELECTOR = '.text__error';
+const VALIDATION_ERROR_SELECTORS = '.pristine-error, .text__error';
 
 let uploadedImageUrl = null;
 
 const isValidFileType = (file) => {
   const fileName = file.name.toLowerCase();
-  return FILE_TYPES.some((type) => fileName.endsWith(type));
+  return FILE_TYPES.some((type) => fileName.endsWith(`.${type}`));
 };
 
 const setPreviewImage = (file) => {
@@ -150,6 +168,9 @@ const initValidate = () => {
 };
 
 const resetForm = () => {
+  if (!formElement) {
+    return;
+  }
   formElement.reset();
   fileInputElement.value = '';
 
@@ -157,9 +178,22 @@ const resetForm = () => {
     pristine.reset();
   }
 
-  formElement.querySelectorAll('.text__error').forEach((el) => el.remove());
-  formElement.querySelectorAll('.pristine-error').forEach((el) => el.classList.remove('pristine-error'));
-  formElement.querySelectorAll('.pristine-success').forEach((el) => el.classList.remove('pristine-success'));
+  formElement.querySelectorAll(TEXT_ERROR_SELECTOR)
+    .forEach((el) => el.remove());
+
+  formElement.querySelectorAll(PRISTINE_ERROR_SELECTOR)
+    .forEach((el) => el.classList.remove(PRISTINE_ERROR_SELECTOR.slice(1)));
+
+  formElement.querySelectorAll(PRISTINE_SUCCESS_SELECTOR)
+    .forEach((el) => el.classList.remove(PRISTINE_SUCCESS_SELECTOR.slice(1)));
+
+  if (previewImgElement) {
+    previewImgElement.src = defaultPreviewSrc;
+  }
+
+  effectsPreviewElements.forEach((preview) => {
+    preview.style.backgroundImage = '';
+  });
 };
 
 const blockSubmitButton = () => {
@@ -246,11 +280,24 @@ const showMessage = (templateId, innerSelector, buttonSelector) => {
 
   document.body.append(messageElement);
 };
-const isMessageOpened = () =>
-  document.querySelector('.success') || document.querySelector('.error');
 
-const showSuccessMessage = () => showMessage('#success', '.success__inner', '.success__button');
-const showErrorMessage = () => showMessage('#error', '.error__inner', '.error__button');
+const isMessageOpened = () =>
+  document.querySelector(SUCCESS_SELECTOR) ||
+  document.querySelector(ERROR_SELECTOR);
+
+const showSuccessMessage = () =>
+  showMessage(
+    SUCCESS_TEMPLATE_ID,
+    SUCCESS_INNER_SELECTOR,
+    SUCCESS_BUTTON_SELECTOR
+  );
+
+const showErrorMessage = () =>
+  showMessage(
+    ERROR_TEMPLATE_ID,
+    ERROR_INNER_SELECTOR,
+    ERROR_BUTTON_SELECTOR
+  );
 
 const onDocumentKeydown = (evt) => {
   if (!isEscapeKey(evt)) {
@@ -277,27 +324,32 @@ function closeUploadForm() {
   overlayElement.classList.add(HIDDEN_CLASS);
   document.body.classList.remove(MODAL_OPEN_CLASS);
   document.removeEventListener('keydown', onDocumentKeydown);
+
   if (uploadedImageUrl) {
     URL.revokeObjectURL(uploadedImageUrl);
     uploadedImageUrl = null;
   }
+
   resetForm();
   resetEditor();
 }
 
 const clearValidationErrors = () => {
+  if (!formElement) {
+    return;
+  }
+
   if (pristine) {
     pristine.reset();
   }
 
   formElement
-    .querySelectorAll('.pristine-error, .text__error')
+    .querySelectorAll(VALIDATION_ERROR_SELECTORS)
     .forEach((el) => el.remove());
 };
 
 const openUploadForm = () => {
   clearValidationErrors();
-
   overlayElement.classList.remove(HIDDEN_CLASS);
   document.body.classList.add(MODAL_OPEN_CLASS);
   document.addEventListener('keydown', onDocumentKeydown);
@@ -307,20 +359,19 @@ const onFileInputChange = () => {
   const file = fileInputElement.files[0];
 
   if (!file || !isValidFileType(file)) {
-    fileInputElement.value = '';
+    if (fileInputElement) {
+      fileInputElement.value = '';
+    }
     return;
   }
-
-  setPreviewImage(file);
-
-  openUploadForm();
-
   if (!isEditorInitialized) {
     initUploadEditor();
     isEditorInitialized = true;
   }
 
   resetEditor();
+  setPreviewImage(file);
+  openUploadForm();
 };
 
 const onCancelButtonClick = (evt) => {
@@ -328,15 +379,21 @@ const onCancelButtonClick = (evt) => {
   closeUploadForm();
 };
 
-const onFormSubmit = (evt) => {
+const onFormReset = () => {
+  resetEditor();
+  if (pristine) {
+    pristine.reset();
+  }
+};
+
+const onFormSubmit = (evt, onSuccess) => {
   evt.preventDefault();
 
   if (!pristine) {
     return;
   }
 
-  const isValid = pristine.validate();
-  if (!isValid) {
+  if (!pristine.validate()) {
     return;
   }
 
@@ -345,6 +402,9 @@ const onFormSubmit = (evt) => {
   sendData(new FormData(formElement))
     .then(() => {
       closeUploadForm();
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+      }
       showSuccessMessage();
     })
     .catch(() => {
@@ -355,14 +415,7 @@ const onFormSubmit = (evt) => {
     });
 };
 
-const onFormReset = () => {
-  resetEditor();
-  if (pristine) {
-    pristine.reset();
-  }
-};
-
-const initUploadForm = () => {
+const initUploadForm = (onSuccess) => {
   if (!formElement || !overlayElement || !fileInputElement || !cancelButtonElement) {
     return;
   }
@@ -370,10 +423,8 @@ const initUploadForm = () => {
   pristine = initValidate();
   fileInputElement.addEventListener('change', onFileInputChange);
   cancelButtonElement.addEventListener('click', onCancelButtonClick);
-  formElement.addEventListener('submit', onFormSubmit);
+  formElement.addEventListener('submit', (evt) => onFormSubmit(evt, onSuccess));
   formElement.addEventListener('reset', onFormReset);
 };
-
-initUploadForm();
 
 export { initUploadForm };

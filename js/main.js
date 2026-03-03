@@ -1,6 +1,6 @@
 import { getData } from './api.js';
 import { initThumbnails } from './picture-thumbnails.js';
-import './upload-form.js';
+import { initUploadForm } from './upload-form.js';
 import { showDataError } from './data-error.js';
 import { showFilters } from './img-filters.js';
 
@@ -15,3 +15,4 @@ const loadData = async () => {
 };
 
 loadData();
+initUploadForm(loadData);

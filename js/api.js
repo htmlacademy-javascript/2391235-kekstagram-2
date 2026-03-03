@@ -1,50 +1,82 @@
-const SERVER_URL = document.querySelector('.img-upload__form').action.replace(/\/$/, '');
+let photosCache = null;
+
+const FORM_SELECTOR = '.img-upload__form';
+const TRAILING_SLASH_REGEXP = /\/$/;
+
+const DEFAULT_METHOD = 'GET';
+const POST_METHOD = 'POST';
 
 const ROUTES = {
   GET: '/data',
   POST: '/',
 };
 
-const request = (route, method = 'GET', body = null) =>
-  new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.responseType = 'json';
+const FORM_DATA_KEYS = {
+  FILE: 'filename',
+  DESCRIPTION: 'description',
+};
 
-    xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.response);
-        return;
-      }
-      reject(new Error(`${xhr.status} ${xhr.statusText}`));
-    });
+const DEFAULT_LIKES = 0;
 
-    xhr.addEventListener('error', () => reject(new Error('Network Error')));
-    xhr.addEventListener('timeout', () => reject(new Error('Request Timeout')));
+const getServerUrl = () => {
+  const formElement = document.querySelector(FORM_SELECTOR);
 
-    xhr.open(method, `${SERVER_URL}${route}`);
-    xhr.send(body);
+  if (!formElement || !formElement.action) {
+    throw new Error('Upload form not found or form.action is empty');
+  }
+
+  return formElement.action.replace(TRAILING_SLASH_REGEXP, '');
+};
+
+const request = async (route, method = DEFAULT_METHOD, body = null) => {
+  const serverUrl = getServerUrl();
+
+  const response = await fetch(`${serverUrl}${route}`, {
+    method,
+    body,
   });
 
-const getData = () => request(ROUTES.GET);
-
-const sendData = (body) => request(ROUTES.POST, 'POST', body);
-
-/*const checkResponse = (response) => {
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText}`);
   }
-  return response;
+
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+  return null;
 };
 
-const getData = () =>
-  fetch(`${SERVER_URL}${ROUTES.GET}`)
-    .then(checkResponse)
-    .then((response) => response.json());
+const getData = async () => {
+  if (!photosCache) {
+    photosCache = await request(ROUTES.GET);
+  }
+  return photosCache;
+};
 
-const sendData = (body) =>
-  fetch(`${SERVER_URL}${ROUTES.POST}`, {
-    method: 'POST',
-    body,
-  }).then(checkResponse);*/
+const sendData = async (body) => {
+  await getData();
+  await request(ROUTES.POST, POST_METHOD, body);
+
+  const file = body.get(FORM_DATA_KEYS.FILE);
+  const description = body.get(FORM_DATA_KEYS.DESCRIPTION);
+
+  if (!file) {
+    return;
+  }
+
+  const newPhoto = {
+    id: photosCache.length + 1,
+    url: URL.createObjectURL(file),
+    description: description || '',
+    likes: DEFAULT_LIKES,
+    comments: [],
+  };
+
+  photosCache.push(newPhoto);
+};
 
 export { getData, sendData };
+
+

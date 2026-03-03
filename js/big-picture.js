@@ -16,6 +16,9 @@ const CLOSE_BUTTON_SELECTOR = '.big-picture__cancel';
 const COMMENT_COUNT_BLOCK_SELECTOR = '.social__comment-count';
 const COMMENTS_LOADER_SELECTOR = '.comments-loader';
 
+const COMMENT_INPUT_SELECTOR = '.social__footer-text';
+const COMMENT_SEND_BUTTON_SELECTOR = '.social__footer-btn';
+
 const bigPictureElement = document.querySelector(BIG_PICTURE_SELECTOR);
 const bigPictureImgElement = bigPictureElement.querySelector(BIG_PICTURE_IMG_SELECTOR);
 const likesCountElement = bigPictureElement.querySelector(LIKES_COUNT_SELECTOR);
@@ -26,6 +29,9 @@ const captionElement = bigPictureElement.querySelector(CAPTION_SELECTOR);
 const closeButtonElement = bigPictureElement.querySelector(CLOSE_BUTTON_SELECTOR);
 const commentCountBlockElement = bigPictureElement.querySelector(COMMENT_COUNT_BLOCK_SELECTOR);
 const commentsLoaderElement = bigPictureElement.querySelector(COMMENTS_LOADER_SELECTOR);
+
+const commentInputElement = bigPictureElement.querySelector(COMMENT_INPUT_SELECTOR);
+const commentSendButtonElement = bigPictureElement.querySelector(COMMENT_SEND_BUTTON_SELECTOR);
 
 const BIG_LIKED_CLASS = 'liked';
 
@@ -58,23 +64,43 @@ const createCommentElement = ({ avatar, name, message }) => {
   return commentElement;
 };
 
+const updateLoaderVisibility = () => {
+  commentsLoaderElement.classList.toggle(
+    BIG_PICTURE_HIDDEN_CLASS,
+    renderedCommentsCount >= currentComments.length
+  );
+};
+
 const renderNextComments = () => {
   const next = currentComments.slice(
-    renderedCommentsCount, renderedCommentsCount + COMMENTS_STEP);
+    renderedCommentsCount,
+    renderedCommentsCount + COMMENTS_STEP
+  );
 
   const fragment = document.createDocumentFragment();
-  next.forEach((comment) => {
-    fragment.append(createCommentElement(comment));
-  });
+  next.forEach((comment) => fragment.append(createCommentElement(comment)));
 
   commentsContainerElement.append(fragment);
   renderedCommentsCount += next.length;
 
   updateCommentsCounters();
+  updateLoaderVisibility();
+};
 
-  if (renderedCommentsCount >= currentComments.length) {
-    commentsLoaderElement.classList.add(BIG_PICTURE_HIDDEN_CLASS);
-  }
+const addNewComment = (message) => {
+  const comment = {
+    avatar: 'img/avatar-6.svg',
+    name: 'Вы',
+    message,
+  };
+
+  currentComments.push(comment);
+  commentsContainerElement.append(createCommentElement(comment));
+
+  renderedCommentsCount += 1;
+
+  updateCommentsCounters();
+  updateLoaderVisibility();
 };
 
 const closeBigPicture = () => {
@@ -99,23 +125,63 @@ function onCommentsLoaderClick() {
   renderNextComments();
 }
 
+function trySendComment() {
+  const message = commentInputElement.value.trim();
+  if (!message) {
+    return;
+  }
+
+  addNewComment(message);
+  commentInputElement.value = '';
+}
+
+function onCommentInputKeydown(evt) {
+  if (evt.key !== 'Enter') {
+    return;
+  }
+
+  evt.preventDefault();
+  trySendComment();
+}
+
+function onCommentSendButtonClick() {
+  trySendComment();
+}
+
 function removeListeners() {
   document.removeEventListener('keydown', onDocumentKeydown);
   closeButtonElement.removeEventListener('click', onCloseButtonClick);
   commentsLoaderElement.removeEventListener('click', onCommentsLoaderClick);
+
+  if (commentInputElement) {
+    commentInputElement.removeEventListener('keydown', onCommentInputKeydown);
+  }
+
+  if (commentSendButtonElement) {
+    commentSendButtonElement.removeEventListener('click', onCommentSendButtonClick);
+  }
 }
 
 function addListeners() {
   document.addEventListener('keydown', onDocumentKeydown);
   closeButtonElement.addEventListener('click', onCloseButtonClick);
   commentsLoaderElement.addEventListener('click', onCommentsLoaderClick);
-}
 
+  if (commentInputElement) {
+    commentInputElement.addEventListener('keydown', onCommentInputKeydown);
+  }
+
+  if (commentSendButtonElement) {
+    commentSendButtonElement.addEventListener('click', onCommentSendButtonClick);
+  }
+}
 
 const openBigPicture = (photo) => {
   currentPhoto = photo;
 
-  currentPhoto.isLiked ??= false;
+  if (currentPhoto && currentPhoto.isLiked === undefined) {
+    currentPhoto.isLiked = false;
+  }
 
   const { url, description, comments } = currentPhoto;
 
@@ -123,12 +189,11 @@ const openBigPicture = (photo) => {
   bigPictureImgElement.alt = description;
 
   likesCountElement.textContent = String(currentPhoto.likes);
-
   likesCountElement.classList.toggle(BIG_LIKED_CLASS, currentPhoto.isLiked);
 
   captionElement.textContent = description;
 
-  currentComments = comments;
+  currentComments = Array.isArray(comments) ? comments : [];
   renderedCommentsCount = 0;
 
   commentsContainerElement.innerHTML = '';
@@ -136,11 +201,11 @@ const openBigPicture = (photo) => {
   commentCountBlockElement.classList.remove(BIG_PICTURE_HIDDEN_CLASS);
   commentsLoaderElement.classList.remove(BIG_PICTURE_HIDDEN_CLASS);
 
-  if (currentComments.length <= COMMENTS_STEP) {
-    commentsLoaderElement.classList.add(BIG_PICTURE_HIDDEN_CLASS);
-  }
-
   renderNextComments();
+
+  if (commentInputElement) {
+    commentInputElement.value = '';
+  }
 
   bigPictureElement.classList.remove(BIG_PICTURE_HIDDEN_CLASS);
   document.body.classList.add(MODAL_OPEN_CLASS);

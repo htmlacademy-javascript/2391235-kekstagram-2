@@ -1,14 +1,15 @@
 const DATA_ERROR_TEMPLATE_SELECTOR = '#data-error';
 const REMOVE_TIMEOUT = 5000;
 
-const showDataError = () => {
-  const template = document.querySelector(DATA_ERROR_TEMPLATE_SELECTOR);
+const dataErrorTemplate = document.querySelector(DATA_ERROR_TEMPLATE_SELECTOR);
 
-  if (!template) {
+const showDataError = () => {
+  if (!dataErrorTemplate || !dataErrorTemplate.content.firstElementChild) {
     return;
   }
 
-  const errorElement = template.content.firstElementChild.cloneNode(true);
+  const errorElement =
+    dataErrorTemplate.content.firstElementChild.cloneNode(true);
 
   document.body.append(errorElement);
 

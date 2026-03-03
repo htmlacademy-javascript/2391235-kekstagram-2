@@ -7,6 +7,8 @@ const PICTURE_IMG_SELECTOR = '.picture__img';
 const PICTURE_LIKES_SELECTOR = '.picture__likes';
 const PICTURE_COMMENTS_SELECTOR = '.picture__comments';
 
+const LIKED_CLASS = 'liked';
+
 const picturesContainer = document.querySelector(PICTURES_CONTAINER_SELECTOR);
 const pictureTemplate = document
   .querySelector(PICTURE_TEMPLATE_SELECTOR)
@@ -14,7 +16,6 @@ const pictureTemplate = document
   .querySelector(PICTURE_SELECTOR);
 
 let renderedPhotos = [];
-
 
 const clearThumbnails = () => {
   if (!picturesContainer) {
@@ -25,15 +26,17 @@ const clearThumbnails = () => {
   pictures.forEach((picture) => picture.remove());
 };
 
-
 function onPicturesContainerClick(evt) {
   const pictureElement = evt.target.closest(PICTURE_SELECTOR);
   if (!pictureElement) {
     return;
   }
 
-  const id = Number(pictureElement.dataset.pictureId);
-  const photo = renderedPhotos[id];
+  evt.preventDefault();
+
+  const photoIndex = Number(pictureElement.dataset.pictureId);
+  const photo = renderedPhotos[photoIndex];
+
   if (!photo) {
     return;
   }
@@ -41,21 +44,17 @@ function onPicturesContainerClick(evt) {
   const likeElement = evt.target.closest(PICTURE_LIKES_SELECTOR);
 
   if (likeElement) {
-    evt.preventDefault();
-
-    photo.isLiked ??= false;
+    if (photo.isLiked === undefined) {
+      photo.isLiked = false;
+    }
 
     photo.isLiked = !photo.isLiked;
     photo.likes = photo.isLiked ? photo.likes + 1 : photo.likes - 1;
 
     likeElement.textContent = String(photo.likes);
-    likeElement.classList.toggle('liked', photo.isLiked);
+    likeElement.classList.toggle(LIKED_CLASS, photo.isLiked);
     return;
   }
-
-  evt.preventDefault();
-
-  photo._id = id;
   openBigPicture(photo);
 }
 
