@@ -3,9 +3,7 @@ import { isEscapeKey } from './utils.js';
 const BIG_PICTURE_SELECTOR = '.big-picture';
 const BIG_PICTURE_HIDDEN_CLASS = 'hidden';
 const MODAL_OPEN_CLASS = 'modal-open';
-
 const COMMENTS_STEP = 5;
-
 const BIG_PICTURE_IMG_SELECTOR = '.big-picture__img img';
 const LIKES_COUNT_SELECTOR = '.likes-count';
 const SHOWN_COMMENTS_COUNT_SELECTOR = '.social__comment-shown-count';
@@ -15,9 +13,9 @@ const CAPTION_SELECTOR = '.social__caption';
 const CLOSE_BUTTON_SELECTOR = '.big-picture__cancel';
 const COMMENT_COUNT_BLOCK_SELECTOR = '.social__comment-count';
 const COMMENTS_LOADER_SELECTOR = '.comments-loader';
-
 const COMMENT_INPUT_SELECTOR = '.social__footer-text';
 const COMMENT_SEND_BUTTON_SELECTOR = '.social__footer-btn';
+const BIG_LIKED_CLASS = 'liked';
 
 const bigPictureElement = document.querySelector(BIG_PICTURE_SELECTOR);
 const bigPictureImgElement = bigPictureElement.querySelector(BIG_PICTURE_IMG_SELECTOR);
@@ -29,11 +27,8 @@ const captionElement = bigPictureElement.querySelector(CAPTION_SELECTOR);
 const closeButtonElement = bigPictureElement.querySelector(CLOSE_BUTTON_SELECTOR);
 const commentCountBlockElement = bigPictureElement.querySelector(COMMENT_COUNT_BLOCK_SELECTOR);
 const commentsLoaderElement = bigPictureElement.querySelector(COMMENTS_LOADER_SELECTOR);
-
 const commentInputElement = bigPictureElement.querySelector(COMMENT_INPUT_SELECTOR);
 const commentSendButtonElement = bigPictureElement.querySelector(COMMENT_SEND_BUTTON_SELECTOR);
-
-const BIG_LIKED_CLASS = 'liked';
 
 let currentComments = [];
 let renderedCommentsCount = 0;
@@ -72,16 +67,16 @@ const updateLoaderVisibility = () => {
 };
 
 const renderNextComments = () => {
-  const next = currentComments.slice(
+  const comments = currentComments.slice(
     renderedCommentsCount,
     renderedCommentsCount + COMMENTS_STEP
   );
 
   const fragment = document.createDocumentFragment();
-  next.forEach((comment) => fragment.append(createCommentElement(comment)));
+  comments.forEach((comment) => fragment.append(createCommentElement(comment)));
 
   commentsContainerElement.append(fragment);
-  renderedCommentsCount += next.length;
+  renderedCommentsCount += comments.length;
 
   updateCommentsCounters();
   updateLoaderVisibility();

@@ -24,25 +24,10 @@ const COMMENT_MAX_LENGTH = 140;
 
 const HASHTAG_REGEXP = /^#[A-Za-zА-Яа-яЁё0-9_]+$/;
 
-const formElement = document.querySelector(FORM_SELECTOR);
-const overlayElement = document.querySelector(OVERLAY_SELECTOR);
-const fileInputElement = document.querySelector(FILE_INPUT_SELECTOR);
-const cancelButtonElement = overlayElement ? overlayElement.querySelector(CANCEL_BUTTON_SELECTOR) : null;
-const hashtagsElement = document.querySelector(HASHTAGS_SELECTOR);
-const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
-const submitButtonElement = document.querySelector(SUBMIT_BUTTON_SELECTOR);
-
-let pristine = null;
-let isEditorInitialized = false;
-
 const PREVIEW_IMG_SELECTOR = '.img-upload__preview img';
 const EFFECTS_PREVIEW_SELECTOR = '.effects__preview';
 
 const FILE_TYPES = ['jpg', 'jpeg', 'png'];
-
-const previewImgElement = overlayElement ? overlayElement.querySelector(PREVIEW_IMG_SELECTOR) : null;
-const defaultPreviewSrc = previewImgElement ? previewImgElement.src : '';
-const effectsPreviewElements = overlayElement ? overlayElement.querySelectorAll(EFFECTS_PREVIEW_SELECTOR) : [];
 
 const SUCCESS_SELECTOR = '.success';
 const ERROR_SELECTOR = '.error';
@@ -61,7 +46,21 @@ const PRISTINE_SUCCESS_SELECTOR = '.pristine-success';
 const TEXT_ERROR_SELECTOR = '.text__error';
 const VALIDATION_ERROR_SELECTORS = '.pristine-error, .text__error';
 
+const formElement = document.querySelector(FORM_SELECTOR);
+const overlayElement = document.querySelector(OVERLAY_SELECTOR);
+const fileInputElement = document.querySelector(FILE_INPUT_SELECTOR);
+const cancelButtonElement = overlayElement ? overlayElement.querySelector(CANCEL_BUTTON_SELECTOR) : null;
+const hashtagsElement = document.querySelector(HASHTAGS_SELECTOR);
+const descriptionElement = document.querySelector(DESCRIPTION_SELECTOR);
+const submitButtonElement = document.querySelector(SUBMIT_BUTTON_SELECTOR);
+
+let pristine = null;
+let isEditorInitialized = false;
 let uploadedImageUrl = null;
+
+const previewImgElement = overlayElement ? overlayElement.querySelector(PREVIEW_IMG_SELECTOR) : null;
+const defaultPreviewSrc = previewImgElement ? previewImgElement.src : '';
+const effectsPreviewElements = overlayElement ? overlayElement.querySelectorAll(EFFECTS_PREVIEW_SELECTOR) : [];
 
 const isValidFileType = (file) => {
   const fileName = file.name.toLowerCase();

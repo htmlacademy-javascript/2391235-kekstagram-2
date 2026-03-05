@@ -22,16 +22,16 @@ let activeButtonElement = null;
 
 const getRandomPhotos = (photos) => {
   const copied = photos.slice();
-  const result = [];
+  const randomPhotos = [];
   const count = Math.min(RANDOM_COUNT, copied.length);
 
-  while (result.length < count) {
+  while (randomPhotos.length < count) {
     const index = getRandomInteger(0, copied.length - 1);
-    result.push(copied[index]);
+    randomPhotos.push(copied[index]);
     copied.splice(index, 1);
   }
 
-  return result;
+  return randomPhotos;
 };
 
 const getDiscussedPhotos = (photos) =>
